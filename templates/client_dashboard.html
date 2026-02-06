@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.title }}</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS  -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/client-dashboard.css') }}?v=2.5">
+</head>
+<body>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="position-fixed top-0 start-50 translate-middle-x mt-4" style="z-index: 9999; min-width: 320px;">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'dark' }} mb-4 border-0 shadow-sm rounded-3">
+                    <span class="fw-bold me-2">{{ 'OK' if category == 'success' else 'INFO' }}</span> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- HEADER -->
+    <header class="sticky-top bg-white border-bottom shadow-sm" style="z-index: 1020;">
+        <div class="container py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h6 mb-0 fw-bold text-dark text-uppercase ls-1" style="letter-spacing: 1px;">Client Portal</h1>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted fw-bold d-none d-md-inline text-uppercase" style="font-size: 1rem; font-weight: 600;">Welcome</span>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-1 fw-bold">
+                        {{ project.client_name }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-5" style="max-width: 1000px;">
+        
+        <!-- Cek Status File -->
+        {% set ns = namespace(ready_to_download=false) %}
+        {% for file in files %}
+            {% if file.is_downloadable %}
+                {% set ns.ready_to_download = true %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- Hero Status Card -->
+        <div class="card card-status mb-5 border-0 shadow-sm overflow-hidden">
+            <div class="card-body p-4 p-md-5">
+                <div class="row align-items-center mb-4">
+    
+                    <div class="col-md-8 mb-3 mb-md-0">
+                        <span class="text-primary fw-bold text-uppercase mb-2 d-block" style="font-size: 0.9rem; letter-spacing: 1px;">PROJECT TITLE</span>
+                        <h2 class="display-6 fw-bold text-dark mb-2 lh-1">{{ project.title }}</h2>
+                        <div class="d-flex align-items-center gap-2">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-md-end">
+                        <span class="text-muted fw-bold text-uppercase d-block mb-2" style="font-size: 0.9rem; letter-spacing: 1px;">CURRENT STATUS</span>
+                        {% if project.status == 'finalizing' %}
+                            {% if ns.ready_to_download %}
+                                <div class="p-3 rounded-2 bg-primary text-white text-center">
+                                    <h6 class="fw-bold mb-0">Final File Available</h6>
+                                </div>
+                            {% else %}
+                                <div class="p-3 rounded-2 bg-success text-white text-center">
+                                    <h6 class="fw-bold mb-0">APPROVED</h6>
+                                    <small class="opacity-75" style="font-size: 0.75rem;">Waiting for final file</small>
+                                </div>
+                            {% endif %}
+                        {% elif project.status == 'needs_revision' %}
+                            <div class="p-3 rounded-2 bg-warning text-dark text-center">
+                                <h6 class="fw-bold mb-0">Revision On Progress</h6>
+                            </div>
+                        {% elif project.status == 'completed' %}
+                            <div class="p-3 rounded-2 bg-secondary text-white text-center">
+                                <h6 class="fw-bold mb-0">Archved Finished</h6>
+                            </div>
+                        {% else %}
+                            <div class="p-3 rounded-2 bg-dark text-white text-center">
+                                <h6 class="fw-bold mb-0">ON PROGRESS</h6>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr class="my-4 opacity-10">
+
+                <div class="row g-0 text-center">
+                    <div class="col-4 border-end">
+                        <small class="text-muted d-block fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">DEADLINE</small>
+                        <span class="fw-bold fs-5 text-dark">{{ project.deadline }}</span>
+                    </div>
+                    <div class="col-4 border-end">
+                        <small class="text-muted d-block fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">REVISION</small>
+                        <span class="fw-bold fs-5 text-dark">{{ project.used_revisions }} / {{ project.max_revisions }}</span>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">TOTAL FILE</small>
+                        <span class="fw-bold fs-5 text-dark">{{ files|length }} Item</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files Section -->
+        <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3">
+            <div>
+                <h4 class="fw-bold mb-0 text-dark">Design File</h4>
+                <p class="text-muted small mb-0 mt-1">Uploaded File List</p>
+            </div>
+        </div>
+
+        {% if files %}
+        <div class="row g-4 mb-5">
+            {% for file in files %}
+            <div class="col-12 col-sm-6 col-md-4">
+                <div class="card h-100 design-card border-0 shadow-sm">
+                    <!-- Thumbnail -->
+                    <div class="position-relative overflow-hidden bg-light" style="height: 240px;">
+                        <img src="{{ url_for('static', filename='uploads/' + file.filename) }}" 
+                             class="w-100 h-100 preview-img" 
+                             style="object-fit: cover;"
+                             onclick="openPreview('{{ url_for('static', filename='uploads/' + file.filename) }}', '{{ file.filename }}', {{ 'true' if file.is_downloadable else 'false' }})">
+                        
+                        <!-- Badge Status File (Text Only) -->
+                        {% if file.is_downloadable %}
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-success rounded-1 shadow-sm px-3 py-2 fw-bold text-uppercase" style="letter-spacing: 1px;">FINAL</span>
+                            </div>
+                        {% else %}
+                             <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-white text-dark border shadow-sm px-3 py-2 fw-bold text-uppercase" style="letter-spacing: 1px; font-size: 0.7rem;">PREVIEW</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="mb-4">
+                            <div class="fw-bold text-dark text-truncate mb-1" title="{{ file.filename }}">{{ file.filename }}</div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-light text-muted border border-light text-uppercase" style="font-size: 0.7rem;">VERSI {{ file.version }}</span>
+                                <small class="text-muted fw-semibold" style="font-size: 0.7rem;">{{ file.uploaded_at }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto d-grid gap-2">
+                            {% if file.is_downloadable %}
+                            <a href="{{ url_for('static', filename='uploads/' + file.filename) }}" download class="btn btn-success fw-bold py-3 shadow-sm text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                DOWNLOAD FILE
+                            </a>
+                            {% else %}
+                            <button class="btn btn-outline-dark fw-bold py-3 text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.5px;" onclick="openPreview('{{ url_for('static', filename='uploads/' + file.filename) }}', '{{ file.filename }}', false)">
+                                PREVIEW
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5 border border-dashed rounded-3 mb-5 bg-white">
+            <h6 class="text-muted fw-bold mb-1 text-uppercase">NO DESIGN AVAILABLE</h6>
+            <p class="text-muted small">DESIGN FILE NOT AVAILABLE YET</p>
+        </div>
+        {% endif %}
+
+        <!-- Feedback & Approval Area -->
+        {% if project.status != 'finalizing' and project.status != 'completed' %}
+        <div class="card border-0 shadow-sm mb-5">
+            <div class="card-header bg-white py-4 border-bottom">
+                <h5 class="fw-bold mb-0 text-dark">RESPOND</h5>
+            </div>
+            <div class="card-body p-4 p-md-5 bg-white rounded-bottom">
+                <form action="{{ url_for('submit_feedback', token=project.access_token) }}" method="POST">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-2" style="letter-spacing: 1px;">COMMENT / REVISION</label>
+                        <textarea class="form-control bg-light border-0 p-3 shadow-none" name="comment" rows="5" placeholder="Fill this with request for revision or message..."></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <button type="submit" name="action" value="revision" class="btn btn-warning w-100 fw-bold py-3 border-2 text-dark text-uppercase" style="letter-spacing: 1px;">
+                                ASK FOR REVISION
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" name="action" value="approve" class="btn btn-primary w-100 fw-bold py-3 shadow-sm text-uppercase" style="letter-spacing: 1px;" onclick="return confirm('Are you sure approve this design?')">
+                                APPROVE FOR FINALIZATION
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% elif project.status == 'finalizing' %}
+            {% if ns.ready_to_download %}
+                <div class="alert alert-primary text-center border-0 shadow-sm py-5 rounded-3 mb-5">
+                    <h4 class="fw-bold mb-2 text-uppercase ls-1">FINAL FILE READY!</h4>
+                    <p class="mb-0 text-muted">Please download the file on the gallery list above</p>
+                </div>
+            {% else %}
+                <div class="alert alert-success text-center border-0 shadow-sm py-5 rounded-3 mb-5">
+                    <h4 class="fw-bold mb-2 text-uppercase ls-1">DESIGN APPROVED</h4>
+                    <p class="mb-0 text-muted">Thank you! Please wait while final file being uploaded</p>
+                </div>
+            {% endif %}
+        {% endif %}
+
+    </main>
+
+    <!-- Modal Preview -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-3">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h6 class="modal-title fw-bold text-uppercase ls-1 text-muted" id="previewTitle">PREVIEW</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <img id="previewImage" src="" class="img-fluid rounded shadow-sm" style="max-height: 80vh;">
+                </div>
+                <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                    <button type="button" class="btn btn-light fw-bold text-uppercase" style="font-size: 0.8rem;" data-bs-dismiss="modal">CLOSE</button>
+                    <a href="#" id="modalDownloadBtn" class="btn btn-success fw-bold px-4 shadow-sm text-uppercase" style="font-size: 0.8rem;" download>DOWNLOAD</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let previewModal;
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalElement = document.getElementById('previewModal');
+            if (modalElement) {
+                previewModal = new bootstrap.Modal(modalElement);
+            }
+        });
+
+        const modalImg = document.getElementById('previewImage');
+        const modalTitle = document.getElementById('previewTitle');
+        const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+
+        function openPreview(imageSrc, imageName, isDownloadable) {
+            if (!previewModal) {
+                const modalElement = document.getElementById('previewModal');
+                if (modalElement) previewModal = new bootstrap.Modal(modalElement);
+                else return;
+            }
+
+            modalImg.src = imageSrc;
+            modalTitle.innerText = imageName;
+            
+            if (isDownloadable) {
+                modalDownloadBtn.href = imageSrc;
+                modalDownloadBtn.download = imageName;
+                modalDownloadBtn.style.display = 'inline-block';
+            } else {
+                modalDownloadBtn.href = '#';
+                modalDownloadBtn.style.display = 'none';
+            }
+            previewModal.show();
+        }
+    </script>
+</body>
+</html>

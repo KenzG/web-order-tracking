@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelancer Workspace</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS (Versi 3.0 untuk paksa refresh total) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/freelancer-dashboard.css') }}?v=3.0">
+
+    <!-- FAILSAFE: Paksa warna background jika CSS external lambat load -->
+    <style>
+        body {
+            background-color: #eff6ff !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar Minimalis -->
+    <nav class="navbar sticky-top">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center gap-4">
+                <span class="navbar-brand">Dashboard</span>
+                
+                <!-- Menu Text Only -->
+                <div class="d-none d-md-flex gap-1 bg-white p-1 rounded border shadow-sm">
+                    <a href="{{ url_for('freelancer_dashboard') }}" 
+                        class="nav-link-custom {{ 'active-active' if not current_filter else '' }}">
+                        Active
+                    </a>
+                    <a href="{{ url_for('freelancer_dashboard', status='needs_revision') }}" 
+                        class="nav-link-custom {{ 'active-revision' if current_filter == 'needs_revision' else '' }}">
+                        Revision
+                    </a>
+                    <a href="{{ url_for('freelancer_dashboard', status='completed') }}" 
+                        class="nav-link-custom {{ 'active-archive' if current_filter == 'completed' else '' }}">
+                        Archive
+                    </a>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-sm-block">
+                    <div class="fw-bold" style="font-size: 0.85rem;">ADMIN</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">Admin</div>
+                </div>
+                <div class="avatar-box">MH</div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid px-4 py-5">
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'dark' }} border-0 shadow-sm mb-4 rounded-3">
+                    <span class="fw-bold me-2">{{ 'SUCCESS' if category == 'success' else 'INFO' }}</span> {{ message }}
+                    <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Stats Grid (Typographic Style - No Icons) -->
+        <div class="row g-4 mb-5">
+            <div class="col-6 col-md-3">
+                <div class="card card-stat">
+                    <span class="stat-label">Active Project</span>
+                    <div class="stat-value">{{ stats.active_projects }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card card-stat">
+                    <span class="stat-label">Finished</span>
+                    <div class="stat-value" style="color: var(--primary);">{{ stats.completed_this_month }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card card-stat">
+                    <span class="stat-label">Revision Pending</span>
+                    <div class="stat-value" style="color: #f59e0b;">{{ stats.pending_revisions }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card card-stat">
+                    <span class="stat-label">Average Time</span>
+                    <div class="stat-value">{{ stats.avg_completion_time }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Header -->
+        <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3" style="border-color: #dbeafe !important;">
+            <div>
+                <h2 class="h4 fw-bold mb-1 text-dark">{{ page_title }}</h2>
+                <p class="text-muted small mb-0 fw-bold">TOTAL {{ projects|length }} ITEM</p>
+            </div>
+            
+            <div class="d-flex gap-2">
+                {% if current_filter %}
+                <a href="{{ url_for('freelancer_dashboard') }}"
+                class="btn btn-outline-secondary btn-sm fw-bold d-flex align-items-center justify-content-center" 
+                style="font-size: 0.75rem;">
+                    RESET FILTER
+                </a>
+                {% endif %}
+                
+                {% if current_filter != 'completed' %}
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                    New Project
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Project Grid -->
+        <div class="row g-4">
+            {% if projects %}
+                {% for project in projects %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <!-- Link Stretched ke Halaman Detail -->
+                    <div class="card project-card h-100 {{ 'card-revisi' if project.status == 'needs_revision' else '' }}">
+                        <div class="card-body p-4 d-flex flex-column h-100">
+                            <!-- Header Kartu -->
+                            <div class="mb-4">
+                                <span class="badge bg-secondary-subtle border fw-bold mb-2">{{ project.client_name }}</span>
+                                <a href="{{ url_for('freelancer_project_detail', project_id=project.id) }}" class="text-decoration-none text-dark stretched-link">
+                                    <h5 class="fw-bold mb-1">{{ project.title }}</h5>
+                                </a>
+                                <div class="text-muted small" style="font-size: 0.75rem;">UPDATED: {{ project.updated_at[:10] }}</div>
+                            </div>
+
+                            <!-- Status Badge Text Only -->
+                            <div class="mb-4">
+                                {% if project.status == 'needs_revision' %}
+                                    <span class="badge bg-warning-subtle text-dark border border-warning rounded-1 w-100 py-2">NEED REVISION</span>
+                                {% elif project.status == 'finalizing' %}
+                                    <span class="badge bg-success-subtle text-success-emphasis rounded-1 w-100 py-2">APPROVED</span>
+                                {% elif project.status == 'completed' %}
+                                    <span class="badge bg-secondary-subtle text-secondary rounded-1 w-100 py-2">FINISHED</span>
+                                {% else %}
+                                    <span class="badge bg-primary-subtle text-primary rounded-1 w-100 py-2">ON PROGRESS</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Meta Data List (Pengganti Ikon) -->
+                            <div class="mb-4 flex-grow-1">
+                                <div class="d-flex justify-content-between mt-3">
+                                    <div>
+                                        <span class="meta-label d-block">Deadline</span>
+                                        <span class="meta-value {{ 'text-danger' if project.days_left < 2 else '' }}">{{ project.deadline }}</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="meta-label d-block">Revisi</span>
+                                        <span class="meta-value">{{ project.used_revisions }} / {{ project.max_revisions }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Feedback Alert Text Only -->
+                            {% if project.status == 'needs_revision' %}
+                            <div class="bg-warning-subtle p-3 rounded mb-3 border border-warning">
+                                <span class="text-dark fw-bold small d-block mb-1">FEEDBACK TERBARU</span>
+                                <p class="small text-muted mb-0 fst-italic">"{{ project.latest_comment }}"</p>
+                            </div>
+                            {% endif %}
+
+                            <!-- Footer Action -->
+                            <div class="mt-auto pt-3 border-top text-end">
+                                <button class="btn btn-sm btn-link text-decoration-none p-0 position-relative fw-bold" style="z-index: 2; font-size: 0.75rem;" onclick="navigator.clipboard.writeText('{{ request.url_root }}client/{{ project.access_token }}'); alert('Link Client disalin!')">
+                                    CLIENT LINK ACCESS
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 py-5 text-center bg-white rounded border">
+                    <h5 class="text-muted fw-bold mb-1">NO DATA</h5>
+                    <p class="text-muted small">No Data Available</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Modal Create Project (Clean Form) -->
+    <div class="modal fade" id="createProjectModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h6 class="modal-title fw-bold text-uppercase ls-1">New Project</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-4">
+                    <form action="{{ url_for('create_project') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Client Name</label>
+                            <input type="text" class="form-control" name="client_name" required placeholder="Name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Project Title</label>
+                            <input type="text" class="form-control" name="title" required placeholder="Please fill with the title of the project">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Description</label>
+                            <textarea class="form-control" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">DEADLINE</label>
+                            <input type="date" class="form-control" name="deadline" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Save Project</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

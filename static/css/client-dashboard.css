@@ -1,0 +1,187 @@
+/* MODERN BLUE THEME - FREELANCER 
+   Font: Inter
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #2563eb;       /* Vivid Blue */
+    --primary-dark: #1e40af;  /* Darker Blue */
+    --secondary: #0f172a;     /* Navy / Dark Slate */
+    
+    /* GANTI BACKGROUND: Dari Slate-50 (#f8fafc) ke Blue-50 (#eff6ff) */
+    --bg-body: #eff6ff;       /* Light Blue Tint - Terlihat modern & tech */
+    
+    --text-main: #1e293b;     /* Slate 800 */
+    --text-muted: #64748b;    /* Slate 500 */
+    --border-color: #e2e8f0;
+    --card-shadow: 0 4px 6px -1px rgb(15 23 42 / 0.05), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+}
+
+body {
+    /* PENTING: Gunakan !important untuk memaksa warna background */
+    background-color: var(--bg-body) !important; 
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* NAVBAR */
+.navbar {
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--secondary) !important;
+    font-size: 1.25rem;
+}
+
+/* CARDS */
+.card {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: white;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+}
+
+.project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgb(15 23 42 / 0.08);
+    border-color: var(--primary); /* Highlight Biru saat hover */
+}
+
+/* Revisi Highlight */
+.card-revisi {
+    border-left: 4px solid #f59e0b !important;
+    background: #fffbeb;
+}
+
+/* STATS CARD (Text Only Style) */
+.card-stat {
+    border: none;
+    background: white;
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--secondary); /* Angka warna Biru Gelap */
+    line-height: 1;
+}
+
+/* BUTTONS */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border: none;
+    padding: 10px 24px;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+}
+
+.btn-outline-secondary {
+    border-color: var(--border-color);
+    color: var(--text-muted);
+    background: white;
+}
+
+.btn-outline-secondary:hover {
+    border-color: var(--secondary);
+    color: var(--secondary);
+    background: #f8fafc;
+}
+
+/* AVATAR */
+.avatar-box {
+    width: 40px;
+    height: 40px;
+    background-color: var(--secondary); /* Avatar Biru Gelap */
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* BADGES (Soft Style) */
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 600;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+}
+
+.bg-primary-subtle { background-color: #eff6ff !important; color: #1d4ed8 !important; }
+.bg-success-subtle { background-color: #f0fdf4 !important; color: #15803d !important; }
+.bg-warning-subtle { background-color: #fffbeb !important; color: #b45309 !important; }
+.bg-secondary-subtle { background-color: #f8fafc !important; color: #475569 !important; }
+
+/* PROGRESS BAR */
+.progress {
+    background-color: #e2e8f0;
+    border-radius: 100px;
+    height: 6px !important;
+}
+.progress-bar {
+    background-color: var(--secondary) !important; /* Progress bar warna Biru Gelap */
+    border-radius: 100px;
+}
+
+/* TYPOGRAPHY */
+.meta-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 4px;
+}
+.meta-value {
+    font-weight: 600;
+    color: var(--secondary);
+}
+
+/* Navigation Tabs */
+.nav-link-custom {
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: 0.2s;
+}
+.nav-link-custom:hover { background-color: #e2e8f0; color: var(--text-main); }
+.nav-link-custom.active { background-color: var(--primary); color: white; }

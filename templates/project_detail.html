@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola: {{ project.title }}</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Gunakan CSS yang sama dengan dashboard freelancer agar tema konsisten -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/freelancer-dashboard.css') }}?v=2.1">
+    
+    <style>
+        /* Specific Override for Detail Page */
+        .card-header {
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+        }
+        .table th {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 700;
+            background-color: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .file-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Header -->
+    <header class="sticky-top shadow-sm bg-white">
+        <div class="container py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-4">
+                    <a href="{{ url_for('freelancer_dashboard') }}" class="btn btn-sm btn-outline-secondary fw-bold" style="font-size: 0.75rem;">&larr; DASHBOARD</a>
+                    <div>
+                        <h1 class="h6 mb-0 fw-bold text-dark">{{ project.title }}</h1>
+                        <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.7rem;">{{ project.client_name }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#editProjectModal" style="font-size: 0.75rem;">
+                        EDIT INFO
+                    </button>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadModal" style="font-size: 0.75rem;">
+                        UPLOAD FILE
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-5">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'dark' }} border-0 shadow-sm mb-4 rounded-3">
+                    <span class="fw-bold me-2">{{ 'Success' if category == 'success' else 'INFO' }}</span> {{ message }}
+                    <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row g-4">
+            <!-- KOLOM KIRI: File Management -->
+            <div class="col-lg-8">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="stat-label mb-0">Design File</span>
+                        <span class="badge bg-light text-dark border">{{ files|length }} FILES</span>
+                    </div>
+                    
+                    {% if files %}
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4 border-0">PREVIEW</th>
+                                    <th class="border-0">FILE INFO</th>
+                                    <th class="border-0">VERSION</th>
+                                    <th class="text-end pe-4 border-0">ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in files %}
+                                <tr>
+                                    <td class="ps-4 border-bottom">
+                                        <a href="{{ url_for('static', filename='uploads/' + file.filename) }}" target="_blank">
+                                            <img src="{{ url_for('static', filename='uploads/' + file.filename) }}" class="file-thumb">
+                                        </a>
+                                    </td>
+                                    <td class="border-bottom">
+                                        <div class="fw-bold text-dark small">{{ file.filename }}</div>
+                                        <div class="small text-muted">{{ file.uploaded_at }}</div>
+                                        
+                                        {% if file.is_downloadable %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle mt-1" style="font-size: 0.6rem;">FINAL FILE</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle mt-1" style="font-size: 0.6rem;">PREVIEW ONLY</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="border-bottom">
+                                        <span class="badge bg-light text-dark border">v{{ file.version }}</span>
+                                        {% if file.is_latest %}<span class="badge bg-primary-subtle text-primary ms-1">NEW</span>{% endif %}
+                                    </td>
+                                    <td class="text-end pe-4 border-bottom">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <form action="{{ url_for('toggle_file_lock', file_id=file.id) }}" method="POST" class="d-inline">
+                                                {% if file.is_downloadable %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary py-1 px-2 fw-bold" style="font-size: 0.65rem;" title="Klik untuk Mengunci">LOCK</button>
+                                                {% else %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-1 px-2 fw-bold" style="font-size: 0.65rem;" title="Klik untuk Membuka">UNLOCK</button>
+                                                {% endif %}
+                                            </form>
+
+                                            <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST" class="d-inline" onsubmit="return confirm('DELETE FILE PERMANENTLY?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold" style="font-size: 0.65rem;">DELETE</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <p class="text-muted small fw-bold text-uppercase ls-1">No Uploaded File Available</p>
+                        <button class="btn btn-sm btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload File</button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- KOLOM KANAN -->
+            <div class="col-lg-4">
+                
+                <!-- Panel Finalisasi -->
+                {% if project.status == 'finalizing' %}
+                <div class="card mb-4 border-0 shadow-sm" style="background-color: #f0fdf4; border-left: 4px solid #15803d !important;">
+                    <div class="card-body">
+                        <h6 class="fw-bold text-success text-uppercase mb-2" style="font-size: 0.75rem;">Finalization</h6>
+                        <p class="small text-dark mb-3">Client has approved the design. Please upload final file and arhcive the project</p>
+                        
+                        <form action="{{ url_for('finish_project', project_id=project.id) }}" method="POST" onsubmit="return confirm('Arsipkan proyek ini?')">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold" style="background-color: #15803d; border: none; font-size: 0.85rem;">FINISH & ARCHIVE</button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Project Info -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <span class="stat-label mb-3 d-block border-bottom pb-2">PROJECT INFORMATION</span>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small text-muted fw-bold">STATUS</span>
+                            {% if project.status == 'needs_revision' %}
+                                <span class="badge bg-warning text-dark">Need Revision</span>
+                            {% elif project.status == 'finalizing' %}
+                                <span class="badge bg-success">Finalization</span>
+                            {% else %}
+                                <span class="badge bg-primary-subtle text-primary">On Progress</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small text-muted fw-bold">DEADLINE</span>
+                            <span class="small fw-bold text-danger">{{ project.deadline }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="small text-muted fw-bold">REVISION</span>
+                            <span class="small fw-bold">{{ project.used_revisions }} / {{ project.max_revisions }}</span>
+                        </div>
+                        
+                        <div class="pt-3 border-top">
+                            <label class="stat-label mb-2 d-block">CLIENT LINK ACCESS</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-sm bg-light" value="{{ request.url_root }}client/{{ project.access_token }}" readonly>
+                                <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="navigator.clipboard.writeText('{{ request.url_root }}client/{{ project.access_token }}'); alert('Disalin!')">COPY</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback List -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="p-3 border-bottom bg-white rounded-top">
+                            <span class="stat-label mb-0">Feedback</span>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% if feedbacks %}
+                                {% for fb in feedbacks %}
+                                <div class="list-group-item p-3 border-bottom">
+                                    <div class="d-flex w-100 justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-light text-dark border">REVISION #{{ fb.revision_number }}</span>
+                                        <small class="text-muted" style="font-size: 0.7rem;">{{ fb.created_at }}</small>
+                                    </div>
+                                    <p class="mb-0 small text-dark fst-italic">"{{ fb.comment }}"</p>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="p-4 text-center">
+                                    <span class="text-muted small fw-bold text-uppercase">No Feedback Available</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Upload -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h6 class="modal-title fw-bold text-uppercase ls-1">Upload File</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-4">
+                    <form action="{{ url_for('upload_file', project_id=project.id) }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">CHOOSE FILE</label>
+                            <input type="file" class="form-control" name="file" required>
+                            <div class="form-text small">Support JPG, PNG, PDF, AI, PSD. Max 50MB.</div>
+                        </div>
+
+                        <!-- Checkbox Final -->
+                        <div class="form-check bg-light p-3 rounded border mb-4">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" name="is_final" id="isFinalCheck">
+                            <label class="form-check-label fw-bold text-dark small text-uppercase" for="isFinalCheck">
+                                Set as Final File
+                            </label>
+                            <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                Please check this box as Final File. File can be downloaded for Client
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">UPLOAD</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Project -->
+    <div class="modal fade" id="editProjectModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h6 class="modal-title fw-bold text-uppercase ls-1">EDIT INFORMATION</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <form action="{{ url_for('edit_project', project_id=project.id) }}" method="POST">
+                    <div class="modal-body pt-4">
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Project Title</label>
+                            <input type="text" class="form-control" name="title" value="{{ project.title }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Description</label>
+                            <textarea class="form-control" name="description" rows="3">{{ project.description }}</textarea>
+                        </div>
+
+                        <div class="row g-2 mb-4">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted">DEADLINE</label>
+                                <input type="date" class="form-control" name="deadline" value="{{ project.deadline }}" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-muted">STATUS</label>
+                                <select class="form-select" name="status">
+                                    <option value="in_progress" {{ 'selected' if project.status == 'in_progress' }}>On Progress</option>
+                                    <option value="needs_revision" {{ 'selected' if project.status == 'needs_revision' }}>Perlu Revisi</option>
+                                    <option value="finalizing" {{ 'selected' if project.status == 'finalizing' }}>Finalisasi</option>
+                                    <option value="completed" {{ 'selected' if project.status == 'completed' }}>Selesai</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <button type="button" class="btn btn-primay btn-danger border-0 fw-bold" onclick="if(confirm('DELETE THIS PROJECT PERMANENTLY?')) { document.getElementById('deleteProjectForm').submit(); }">
+                                DELETE PROJECT
+                            </button>
+                            <button type="submit" class="btn btn-primary">SAVE CHANGES</button>
+                        </div>
+                    </div>
+                </form>
+
+                <form id="deleteProjectForm" action="{{ url_for('delete_project', project_id=project.id) }}" method="POST" style="display: none;"></form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
