@@ -25,12 +25,14 @@
 </head>
 <body>
 
-    <!-- Navbar Minimalis -->
+    <!-- Navbar -->
     <nav class="navbar sticky-top">
         <div class="container-fluid px-4">
             <div class="d-flex align-items-center gap-4">
-                <span class="navbar-brand">Dashboard</span>
-                
+                <a href="{{ url_for('freelancer_dashboard') }}" class="navbar-brand text-decoration-none">
+                    <span>Dashboard</span>
+                </a>
+
                 <!-- Menu Text Only -->
                 <div class="d-none d-md-flex gap-1 bg-white p-1 rounded border shadow-sm">
                     <a href="{{ url_for('freelancer_dashboard') }}" 
@@ -48,13 +50,22 @@
                 </div>
             </div>
             
-            <div class="d-flex align-items-center gap-3">
+            <!-- Profile Navbar -->
+            <div class="dropdown">
+            <div class="d-flex align-items-center gap-3" role="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
                 <div class="text-end d-none d-sm-block">
                     <div class="fw-bold" style="font-size: 0.85rem;">ADMIN</div>
                     <div class="text-muted" style="font-size: 0.7rem;">Admin</div>
                 </div>
                 <div class="avatar-box">MH</div>
             </div>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3" aria-labelledby="profileDropdown">
+                <li><h6 class="dropdown-header small fw-bold text-uppercase">Account Settings</h6></li>
+                <li><a class="dropdown-item small py-2" href="#">Edit Profile</a></li>
+                <li><a class="dropdown-item small py-2" href="#">Notification Settings</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item small py-2 text-danger fw-bold" href="#">Logout</a></li>
+            </ul>
         </div>
     </nav>
 
